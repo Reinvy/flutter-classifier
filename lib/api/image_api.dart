@@ -7,6 +7,7 @@ class ImageApi {
 
   Future<String> predictImage(XFile file) async {
     try {
+      print("12");
       final FormData data = FormData.fromMap({
         "image": await MultipartFile.fromFile(
           file.path,
@@ -14,11 +15,11 @@ class ImageApi {
         ),
       });
       Response result = await dio.post(
-        "$baseUrl/image",
+        "$baseUrl/images",
         data: data,
       );
-
-      return result.data["result"];
+      print("object");
+      return result.data["return"];
     } catch (e) {
       rethrow;
     }
