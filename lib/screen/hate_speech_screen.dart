@@ -1,36 +1,28 @@
-import 'dart:io';
-
+import 'package:classifier/provider/hate_speech_provider.dart';
 import 'package:classifier/provider/image_classification_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class InputScreen extends ConsumerWidget {
-  const InputScreen({super.key});
+class HateSpeechScreen extends ConsumerWidget {
+  const HateSpeechScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isLoading = ref.watch(isLoadingProvider);
+    final textC = TextEditingController();
     return Scaffold(
       appBar: AppBar(),
       body: Column(
         children: [
-          Container(
-            height: 320,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(20),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: TextFormField(
+              controller: textC,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
               ),
-              color: Colors.grey[400],
-              image: ref.watch(imageProvider) != null
-                  ? DecorationImage(
-                      image: FileImage(
-                        File(ref.watch(imageProvider)!.path),
-                      ),
-                      fit: BoxFit.cover)
-                  : const DecorationImage(
-                      image: AssetImage("assets/man_woman.png"),
-                    ),
+              minLines: 10,
+              maxLines: 10,
             ),
           ),
           const SizedBox(
@@ -38,22 +30,13 @@ class InputScreen extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              final image = await ImageUtil().pickImage();
-              ref.read(imageProvider.notifier).state = image;
+              ref.read(isLoadingProvider.notifier).state = true;
+              final result =
+                  await HateSpeechUtil().hateSpeechDetection(textC.text);
+              ref.read(isLoadingProvider.notifier).state = false;
+              ref.read(imageResultProvider.notifier).state = result;
             },
-            child: const Text("Select Image"),
-          ),
-          ElevatedButton(
-            onPressed: ref.read(imageProvider) == null
-                ? null
-                : () async {
-                    ref.read(isLoadingProvider.notifier).state = true;
-                    final result = await ImageUtil()
-                        .imageClassification(ref.read(imageProvider)!);
-                    ref.read(isLoadingProvider.notifier).state = false;
-                    ref.read(imageResultProvider.notifier).state = result;
-                  },
-            child: const Text("Classification"),
+            child: const Text("Detect Text"),
           ),
           Expanded(
             child: Container(
@@ -64,7 +47,7 @@ class InputScreen extends ConsumerWidget {
                 color: Colors.grey[400],
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: ref.watch(imageResultProvider) != null
+              child: ref.watch(hateSpeechResultProvider) != null
                   ? Center(
                       child: isLoading
                           ? const Center(
@@ -72,7 +55,7 @@ class InputScreen extends ConsumerWidget {
                               color: Colors.blue,
                             ))
                           : Text(
-                              ref.watch(imageResultProvider)!,
+                              ref.watch(hateSpeechResultProvider)!,
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
